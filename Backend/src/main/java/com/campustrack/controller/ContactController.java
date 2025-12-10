@@ -1,14 +1,13 @@
 package com.campustrack.controller;
 
 import com.campustrack.dto.ContactRequest;
+import com.campustrack.model.Contact;
+import com.campustrack.repository.ContactRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.mail.internet.MimeMessage;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,14 +15,11 @@ import java.util.Map;
 public class ContactController {
     
     @Autowired
-    private JavaMailSender mailSender;
+    private ContactRepository contactRepository;
     
-    @Value("${spring.mail.username}")
-    private String emailUser;
-    
-    // Process contact form submissions and send email
+    // Process contact form submissions and save to database
     @PostMapping
-    public ResponseEntity<?> sendContactMail(@RequestBody ContactRequest request) {
+    public ResponseEntity<?> submitContact(@RequestBody ContactRequest request) {
         try {
             // Make sure all required fields are filled
             if (request.getName() == null || request.getEmail() == null || 
@@ -32,24 +28,58 @@ public class ContactController {
                         .body(Map.of("message", "All fields are required"));
             }
             
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            // Create and save contact
+            Contact contact = new Contact();
+            contact.setName(request.getName());
+            contact.setEmail(request.getEmail());
+            contact.setPhone(request.getPhone());
+            contact.setMessage(request.getMessage());
             
-            helper.setFrom("CampusFind <" + emailUser + ">");
-            helper.setReplyTo(request.getEmail());
-            helper.setTo(emailUser);
-            helper.setSubject("New Message from " + request.getName());
-            helper.setText("Name: " + request.getName() + "\n" +
-                    "Email: " + request.getEmail() + "\n" +
-                    "Phone Number: " + request.getPhone() + "\n" +
-                    "Message:\n" + request.getMessage(), false);
-            
-            mailSender.send(message);
+            contactRepository.save(contact);
             
             return ResponseEntity.ok(Map.of("message", "Message sent successfully!"));
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(Map.of("message", "Failed to send message", "error", e.getMessage()));
+        }
+    }
+    
+    // Get all contact messages (for admin)
+    @GetMapping
+    public ResponseEntity<?> getAllContacts() {
+        try {
+            List<Contact> contacts = contactRepository.findAllByOrderByCreatedAtDesc();
+            return ResponseEntity.ok(contacts);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Failed to fetch contacts", "error", e.getMessage()));
+        }
+    }
+    
+    // Mark contact as read (for admin)
+    @PutMapping("/{id}/read")
+    public ResponseEntity<?> markAsRead(@PathVariable String id) {
+        try {
+            Contact contact = contactRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Contact not found"));
+            contact.setStatus("read");
+            contactRepository.save(contact);
+            return ResponseEntity.ok(Map.of("message", "Marked as read"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Failed to update contact", "error", e.getMessage()));
+        }
+    }
+    
+    // Delete contact (for admin)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteContact(@PathVariable String id) {
+        try {
+            contactRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("message", "Contact deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", "Failed to delete contact", "error", e.getMessage()));
         }
     }
 }
