@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { FaBell, FaEnvelope, FaCheckCircle, FaClock } from "react-icons/fa";
 
@@ -204,23 +205,23 @@ function NotificationPage() {
                   )}
 
                   {notification.data?.matchId && notification.data?.type === "new_message" && (
-                    <a
-                      href={`/user-dashboard/my-matches?chat=${notification.data.matchId}`}
+                    <Link
+                      to={`/user-dashboard/my-matches?chat=${notification.data.matchId}`}
                       className="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm transition"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Go to Chat →
-                    </a>
+                    </Link>
                   )}
 
                   {notification.data?.matchId && notification.data?.type === "match_found" && (
-                    <a
-                      href="/user-dashboard/my-matches"
+                    <Link
+                      to="/user-dashboard/my-matches"
                       className="inline-block mt-3 text-orange-400 hover:text-orange-300 font-semibold text-sm underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       View Match Details →
-                    </a>
+                    </Link>
                   )}
                 </div>
               </div>

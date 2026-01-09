@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaTimes, FaPaperPlane, FaRobot } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../../config";
 
 const AIChatBot = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([
     {
       type: "bot",
@@ -144,17 +146,17 @@ Still having issues?`,
       const path = option === "Report Lost Item" ? "/report-lost-item" : "/report-found-item";
       addMessage("bot", `Opening ${option} page...`);
       setTimeout(() => {
-        window.location.href = path;
+        navigate(path);
       }, 1000);
     } else if (option === "Check My Matches") {
       addMessage("bot", "Opening My Matches...");
       setTimeout(() => {
-        window.location.href = "/user-dashboard/my-matches";
+        navigate("/user-dashboard/my-matches");
       }, 1000);
     } else if (option === "Contact Support") {
       addMessage("bot", "Opening Contact page...");
       setTimeout(() => {
-        window.location.href = "/contact";
+        navigate("/contact");
       }, 1000);
     } else if (option === "Back to Menu") {
       setConversationContext({ mode: null, itemSearch: { step: 0 } });
